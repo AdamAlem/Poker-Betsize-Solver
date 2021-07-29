@@ -1,4 +1,4 @@
 * Fix edge case error in CreateRankOrder fn
-* Fix pruning
+* Fix pruning bug
 * Apply pruning to betsize solving
 * Create visualization for solver
