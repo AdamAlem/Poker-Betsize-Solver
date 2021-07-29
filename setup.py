@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu May 27 16:23:15 2021
-@author: Adam
-"""
-
-
 board = randBoard()
 p1 = Player(makeRange(20, board))
 p2 = Player(makeRange(25, board))
