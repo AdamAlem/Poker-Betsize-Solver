@@ -1,5 +1,9 @@
+import json
 import numpy as np
 
+with open("handranks.txt", 'r') as f:
+    handorder = json.load(f)
+    
 RANKS = '23456789TJQKA'
 SUITS = 'cdhs'
 
@@ -111,7 +115,7 @@ def createNLHands(ordering=None):
     
     return NLhands
 
-nlhands = createNLHands(lowres) #Creates starting hand groups
+nlhands = createNLHands(handorder) #Creates starting hand groups
 
 def applyiso(board):
     #Groups together strategically equivalent combos for all starting hands

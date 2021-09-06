@@ -54,10 +54,35 @@ class Solver:
                 regrets.append(handevs)
         return regrets
       
+    def prune(self, node):
+    #Deattaches node from tree
+    #Changes resulting options, sizes, and strategy
+        if node == self.tree.root:
+            raise BaseException("Can't prune root")
+        
+        for o in node.parent.options:
+            if getattr(node.parent, o) == node:
+                line = o
+                lineindex = node.parent.options.index(o)
+                setattr(node.parent, line, None)
+                node.parent.options.remove(line)
+                node.parent.sizes = np.delete(node.parent.sizes, lineindex-node.parent.options.count('f')-1, axis=0)
+                node.parent.strategy = np.delete(node.parent.strategy, lineindex, axis=0)
+                node.parent.strategy /= np.sum(node.parent.strategy, axis=0)
+        
+        self.onodes = tree.getnodes(tree.root, onode=True)
+        self.inodes = tree.getnodes(tree.root, inode=True)
+        
+        self.tree.nodeEV()
+    
+    
     def step(self, node, lr=.4, exp=.7):
         #Steps strategy in direction of -gradient of cost fn 
         
-        grad = node.branchevs / node.strategy
+        try:
+            grad = node.branchevs / node.strategy
+        except ValueError:
+            print(node)
         grad -= np.max(grad, axis=0)
         #Normalization
         grad /= node.weights[node.depth%2]*self.tree.rou[node.depth%2].dot(self.tree.root.weights[(node.depth+1)%2])
@@ -110,7 +135,7 @@ class Solver:
         # Experimental gradient method for bet sizes
         # Seems to work reasonably well with pruning.
         for node in nodes:
-            if node.sizes.size > 0 and np.sum(node.weights[0]*self.tree.rou[0].dot(node.weights[1])) > .01 * 2**-(node.depth+1):
+            if node.sizes.size > 0 and np.sum(node.weights[node.depth%2]*self.tree.rou[node.depth%2].dot(node.weights[(node.depth+1)%2])) > .01 * 3**-(node.depth+1):
                 grad = []
                 for o in node.options:
                     if self.totalstrat(node)[node.options.index(o)] > .01:
@@ -145,17 +170,37 @@ class Solver:
             self.Solve()
             
         self.showsizes()
-                
-    def showsizes(self):
-
-        for node in self.onodes:
-            if node.sizes.size > 0:
-                print(node.__repr__()[:node.__repr__().rfind('D')], "Sizes: ", node.sizes, "Frequency: ", self.totalstrat(node)[-len(node.sizes):])
-
+    
+    def showgrad(self, node):
+        grad = []
+        for o in node.options:
+            if 'r' in o:
+                branch = getattr(node, o)
+                fe = self.totalstrat(branch)[0]
+                comboevs = self.getEVs(branch, bycombo=True)[branch.depth%2]
+                mincost = np.nanmin(np.where(branch.strategy[0] > .999, np.nan, comboevs/(1-branch.strategy[0])))
+                actioncost = self.getEVs(branch)[branch.depth%2] / (1-fe)
+                g = (branch.pot - branch.last) - (2*actioncost - mincost) #The gradient
+                g /= branch.pot
+                grad.append(g)
         
-        for node in self.inodes:
-            if node.sizes.size > 0:
-                print(node.__repr__()[:node.__repr__().rfind('D')], "Sizes: ", node.sizes, "Frequency: ", self.totalstrat(node)[-len(node.sizes):])
+        return grad
+    
+    def showsizes(self):
+        
+        for i in range(self.tree.maxd+1):
+            
+            onode = [node for node in self.onodes if node.depth == i]
+            inode = [node for node in self.inodes if node.depth == i]
+            
+            for node in onode:
+                if node.sizes.size > 0:
+                    print(node.__repr__()[:node.__repr__().rfind('D')], "Sizes: ", node.sizes, "Freq: ", np.sum(node.weights[node.depth%2]*self.tree.rou[node.depth%2].dot(node.weights[(node.depth+1)%2])), "Betting Freq:", self.totalstrat(node)[-len(node.sizes):])
+    
+            
+            for node in inode:
+                if node.sizes.size > 0:
+                    print(node.__repr__()[:node.__repr__().rfind('D')], "Sizes: ", node.sizes, "Freq: ", np.sum(node.weights[node.depth%2]*self.tree.rou[node.depth%2].dot(node.weights[(node.depth+1)%2])), "Betting Freq:", self.totalstrat(node)[-len(node.sizes):])
 
     
     def Solve(self, n=100, lr=.4, exp=.7, goal=.01):
@@ -170,5 +215,8 @@ class Solver:
                 if np.sum(cost) < goal:
                     return cost
         return self.getCost()
+
+        
+
 
     

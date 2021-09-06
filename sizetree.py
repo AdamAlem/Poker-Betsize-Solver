@@ -1,4 +1,5 @@
 import player
+import numpy as np
 
     
 def createOptions(sizes=2, setup='fcr', bounds=[30,150]):
@@ -51,7 +52,7 @@ class Node:
         self.freq = None # Only defined for leaf nodes, used for quick calculation
 
         if options:
-            self.options = options[0]
+            self.options = options[0][:] #Slice avoids binding when pruning options
             self.sizes = options[1]
             self.strategy = createStrategy(self.options, numcombos)
             for o in self.options:
@@ -242,25 +243,6 @@ class Tree:
                     frontier.append(getattr(pointer, o))
                     
     
-    def prune(self, node):
-        #Deattaches node from tree
-        #Changes resulting options, sizes, and strategy
-        if node == self.root:
-            raise BaseException("Can't prune root")
-        
-        for o in node.parent.options:
-            if getattr(node.parent, o) == node:
-                line = o
-                lineindex = node.parent.options.index(o)
-                setattr(node.parent, o, None)
-                node.parent.options.remove(line)
-                node.parent.sizes = np.delete(node.parent.sizes, lineindex-node.parent.options.count('f')-1, axis=0)
-                node.parent.strategy = np.delete(node.parent.strategy, lineindex, axis=0)
-                node.parent.strategy /= np.sum(node.parent.strategy, axis=0)
-        
-        self.nodeEV()
-        
-    
     def nodeEV(self):
         #Well optimized via numpy.
         #Meat and potatoes of the solver - Most of the calculation time goes on here.
@@ -410,4 +392,7 @@ class Tree:
             for o in pointer.options:
                 if getattr(pointer, o).options:
                     frontier.append(getattr(pointer, o))
+        
+        self.nodeEV()
+            
     

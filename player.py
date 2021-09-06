@@ -30,10 +30,15 @@ def CreateRankOrder(p1, p2, board):
         temprow = []
         for j in range(len(p2.hands)):
             removal = 0
-            for hand in p2.hands[j]:
-                if p1.hands[i][0][0] in hand or p1.hands[i][0][1] in hand:
-                    removal += 1
-            removal = 1-removal/len(p2.hands[j])
+            for k in range(len(p1.hands[i])):
+                rem = 0
+                for hand in p2.hands[j]:
+                    if p1.hands[i][k][0] in hand or p1.hands[i][k][1] in hand:
+                        rem += 1
+                rem = 1-rem/len(p2.hands[j])
+                removal += rem
+            
+            removal/=len(p1.hands[i])
             temprou.append(removal)
             
             if p1values[i] > p2values[j]:
@@ -51,10 +56,15 @@ def CreateRankOrder(p1, p2, board):
         temprow = []
         for j in range(len(p1.hands)):
             removal = 0
-            for hand in p1.hands[j]:
-                if p2.hands[i][0][0] in hand or p2.hands[i][0][1] in hand:
-                    removal += 1
-            removal = 1-removal/len(p1.hands[j])
+            for k in range(len(p2.hands[i])):
+                rem = 0
+                for hand in p1.hands[j]:
+                    if p2.hands[i][k][0] in hand or p2.hands[i][k][1] in hand:
+                        rem += 1
+                rem = 1-rem/len(p1.hands[j])
+                removal += rem
+                
+            removal/=len(p2.hands[i])
             temprou.append(removal)
             
             if p2values[i] > p1values[j]:
