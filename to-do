@@ -1,4 +1,3 @@
-* Fix edge case error in CreateRankOrder fn
-* Fix pruning bug
-* Apply pruning to betsize solving
-* Create visualization for solver
+* Find and fix rare-ish true divide error
+* Improve SizeSolve algorithm w.o pruning
+* Allow SizeSolve to add new sizes to start NLNash project
